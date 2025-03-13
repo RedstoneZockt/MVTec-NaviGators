@@ -116,13 +116,13 @@ class Controller():
 
 class SerialCommunication():
     def __init__(self, port):
-        self.serial = serial.Serial(port)
+        self.serial0 = serial.Serial(port)
         self.heart_beat = True
 
     def send_data(self, data):
         command_heart_beat: str = ":WD=" + str(int(self.heart_beat)) + "!"
-        self.serial.write(command_heart_beat.encode())
-        serial.write(data.encode())
+        self.serial0.write(command_heart_beat.encode())
+        self.serial0.write(data.encode())
         self.heart_beat = not self.heart_beat
 
 communication = Communication("127.0.0.1", 6000)
