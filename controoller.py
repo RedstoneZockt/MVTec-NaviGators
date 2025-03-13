@@ -48,15 +48,6 @@ class Communication():
 
 
 
-# class SerialCommunication():
-#     def __init__(self, port0, baudrate0):
-#         self.serial0 = serial.Serial(port0, baudrate0, timeout=1)
-#         #self.serial1 = serial.Serial(port1, baudrate1, timeout=1)
-#
-#     def send_command(self, command):
-#         self.serial0.write(command.encode())
-
-
 class Controller():
     def __init__(self):
         self.mode = 1
