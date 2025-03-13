@@ -106,12 +106,14 @@ class Controller():
         in_min = -100
         in_max = 100
         out_min = 0
-        out_max = 512
+        out_max = 310
         return (speed - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 
     def controller_data_sender(self):
         self.serial.send_data(":ML=" + str(self.left_speed) + "!")
+        print(":ML=" + str(self.left_speed) + "!")
         self.serial.send_data(":MR=" + str(self.right_speed) + "!")
+        print(":MR=" + str(self.right_speed) + "!")
 
 
 class SerialCommunication():
@@ -125,7 +127,7 @@ class SerialCommunication():
         self.serial0.write(data.encode())
         self.heart_beat = not self.heart_beat
 
-communication = Communication("127.0.0.1", 6000)
+communication = Communication("192.168.178.22", 5000)
 
 while True:
     data = communication.listen()

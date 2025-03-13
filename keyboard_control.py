@@ -7,13 +7,14 @@ speed = 50
 print("Press W/A/S/D to move, Q to quit.")
 
 
-communication = comunication.Transceiver('127.0.0.1', 6000)
+communication = comunication.Transceiver('127.0.0.1', 5000)
 communication.send_data('S' + str(speed))
 
 while True:
     # Forward
     if keyboard.is_pressed("w"):
         communication.send_data('F')
+        print("Forward")
 
     # Backward
     elif keyboard.is_pressed("s"):
