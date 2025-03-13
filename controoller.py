@@ -1,8 +1,6 @@
 import socket
-#import serial
+import serial
 import time
-
-from can.interfaces import serial
 
 
 # MODE:
