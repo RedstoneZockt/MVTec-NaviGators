@@ -7,7 +7,7 @@ speed = 50
 print("Press W/A/S/D to move, Q to quit.")
 
 
-communication = comunication.Transceiver('127.0.0.1', 5000)
+communication = comunication.Transceiver('127.0.0.1', 3000)
 communication.send_data('S' + str(speed))
 
 while True:
