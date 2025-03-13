@@ -1,5 +1,15 @@
 import socket
 
+# x - value mean digit
+# Sxxx - speed set from 0 to 100
+# Mx - mode of controller
+# F - move forward in mode 1
+# B - move backward in mode 1
+# R - turn right in mode 1
+# L - turn left in mode 1
+# S - stop in mode 1
+
+
 while True:
     user_input = input("Enter something: ")
     print("You entered:", user_input)
