@@ -78,7 +78,8 @@ class Controller():
         print("Speed changed to ", speed)
 
     def go_forward(self):
-        print("Going forward")
+        self.set_right_side(self.speed)
+        self.set_left_side(self.speed)
 
     def go_back(self):
         # TODO: code to go back
@@ -93,7 +94,26 @@ class Controller():
         print("Going left")
 
     def go_stop(self):
-        print("Going stop")
+        self.set_right_side(0.0)
+        self.set_left_side(0.0)
+
+
+    # Right side control
+    def set_right_side(self, speed):
+        print("Setting right side to ", self.speed_normalize_funcion(speed))
+
+    # Left side control
+    def set_left_side(self, speed):
+        print("Setting left side to ", self.speed_normalize_funcion(speed))
+
+    def speed_normalize_funcion(self, speed):
+        in_min = -100
+        in_max = 100
+        out_min = 0
+        out_max = 512
+        return (speed - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+
+
 
 
 communication = Communication("127.0.0.1", 6000)
