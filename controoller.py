@@ -1,0 +1,108 @@
+import socket
+#import serial
+import time
+
+
+
+# MODE:
+# 1 - Forward, Backward, Turn left, Turn right control
+# 2 - To goal controller
+# 3 - To goal controller with obstacles collision avoid
+
+# Socket communication for parts of the code
+class Communication():
+    def __init__(self, ip, port):
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server.bind((ip, port))
+        self.server.listen(1)
+        self.controller = Controller()
+
+    def listen(self):
+        conn, addr = self.server.accept()
+        data = conn.recv(1024)
+        conn.close()
+        return data.decode()
+
+    def data_recognition_controller(self, data):
+        try:
+            if data[0] == "M":
+                self.controller.set_mode(int(data[1]))
+            elif data[0] == "F":
+                self.controller.go_forward()
+            elif data[0] == "B":
+                self.controller.go_back()
+            elif data[0] == "R":
+                self.controller.go_right()
+            elif data[0] == "L":
+                self.controller.go_left()
+            elif data[0] == "S":
+                if (len(data) == 1):
+                    self.controller.go_stop()
+                else:
+                    self.controller.set_speed(int(data[1:4]))
+            else:
+                print("Unknown command")
+        except:
+            print("Message error:", data)
+
+
+
+
+# class SerialCommunication():
+#     def __init__(self, port0, baudrate0):
+#         self.serial0 = serial.Serial(port0, baudrate0, timeout=1)
+#         #self.serial1 = serial.Serial(port1, baudrate1, timeout=1)
+#
+#     def send_command(self, command):
+#         self.serial0.write(command.encode())
+
+
+class Controller():
+    def __init__(self):
+        self.mode = 1
+        # Goal [x, y]
+        self.goal = [0, 0]
+
+        # Actual position [x, y]
+        self.actual_position = [0, 0]
+
+        # Speed
+        self.speed = 0
+
+    def set_mode(self, mode):
+        self.mode = mode
+        print("Mode changed to ", mode)
+
+    def set_speed(self, speed):
+        self.speed = speed
+        print("Speed changed to ", speed)
+
+    def go_forward(self):
+        print("Going forward")
+
+    def go_back(self):
+        # TODO: code to go back
+        print("Going backward")
+
+    def go_right(self):
+        # TODO: code to go right
+        print("Going right")
+
+    def go_left(self):
+        # TODO: code to go left
+        print("Going left")
+
+    def go_stop(self):
+        print("Going stop")
+
+
+communication = Communication("127.0.0.1", 6000)
+
+while True:
+    data = communication.listen()
+    print(data)
+    communication.data_recognition_controller(data)
+
+
+
+
