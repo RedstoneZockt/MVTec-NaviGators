@@ -18,7 +18,7 @@ while True:
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     try:
-        client.connect(("127.0.0.1", 5000))  # Connect to the server
+        client.connect(("127.0.0.1", 4000))  # Connect to the server
         client.sendall(user_input.encode())  # Send data
     except ConnectionRefusedError:
         print("Error: Could not connect to server. Make sure the server is running.")

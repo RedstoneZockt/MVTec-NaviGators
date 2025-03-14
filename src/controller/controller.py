@@ -8,7 +8,7 @@ import sys
 
 serial_port = "/dev/ttyUSB0"
 server_address = "127.0.0.1"
-server_port = 3000
+server_port = 4000
 debug = False
 # MODE:
 # 1 - Forward, Backward, Turn left, Turn right control

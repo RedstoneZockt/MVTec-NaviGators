@@ -3,7 +3,7 @@ import time
 import threading
 
 ip_address = '127.0.0.1'
-controller_port = 3000
+controller_port = 4000
 search_algorithm_port = 5000
 
 communication_controller = comunication.Transceiver(ip_address, controller_port)
@@ -20,9 +20,10 @@ class Manager:
 
     def state_update(self):
         while self.running:
-            if communication_search.data == "Search":
+            if communication_search.data == "s":
                 self.search.searching = True
-            elif communication_search.data == "Found":
+            elif communication_search.data == "f":
+                self.search.i = 0
                 self.search.searching = False
                 communication_controller.send_data("S")
 
@@ -32,26 +33,36 @@ class Manager:
 class SearchAlgorithm:
     def __init__(self):
         communication_controller.send_data('M1')
-        communication_controller.send_data('S80')
+        communication_controller.send_data('S60')
         self.searching = False
         self.running = True
-        self.turning_time = 1
-        self.forward_time = 3
-
-        # [command, duration]
-        self.searching_command_list = [['F', self.forward_time], ['L', self.turning_time], ['F', self.forward_time], ['R', self.turning_time], ['F', self.forward_time], ['R', self.turning_time], ['F', self.forward_time], ['L', self.turning_time]]
+        self.turning_time = 0.5
+        self.forward_time = 1
+        self.forward_speed = 50
+        self.turning_speed = 100
+        self.i = 0
+        # [command, duration, speed]
+        self.searching_command_list = [['F', self.forward_time, self.forward_speed],
+                                       ['L', self.turning_time, self.turning_speed],
+                                       ['F', self.forward_time, self.forward_speed],
+                                       ['R', self.turning_time, self.turning_speed],
+                                       ['F', self.forward_time, self.forward_speed],
+                                       ['R', self.turning_time, self.turning_speed],
+                                       ['F', self.forward_time, self.forward_speed],
+                                       ['L', self.turning_time, self.turning_speed]]
 
     def __del__(self):
         self.running = False
 
     def search(self):
-        i = 0
+
         while self.running:
             if self.searching:
-                self.interval_sender(self.searching_command_list[i][1], 0.2, self.searching_command_list[i][0])
-                i+=1
-                if i == len(self.searching_command_list):
-                    i = 0
+                communication_controller.send_data('S' + str(self.searching_command_list[self.i][2]))
+                self.interval_sender(self.searching_command_list[self.i][1], 0.05, self.searching_command_list[self.i][0])
+                self.i+=1
+                if self.i == len(self.searching_command_list):
+                    self.i = 0
 
 
 
