@@ -1,14 +1,15 @@
 import socket
-import serial
+#import serial
 import time
 import threading
 import comunication
 import odometry
+import sys
 
 serial_port = "/dev/ttyUSB0"
 server_address = "127.0.0.1"
-server_port = 6000
-debug = False
+server_port = 3000
+debug = True
 # MODE:
 # 1 - Forward, Backward, Turn left, Turn right control
 # 2 - To goal controller
@@ -57,7 +58,7 @@ class FollowerController():
 class Controller():
     def __init__(self, serial):
         self.mode = 1
-        self.speed = 0
+        self.speed = 80
         self.serial = serial
         self.right_speed = self.speed_normalize_function(0)
         self.left_speed = self.speed_normalize_function(0)
@@ -68,6 +69,9 @@ class Controller():
 
 
         self.running = True
+
+    def __del__(self):
+        self.running = False
 
     def odometry_test(self):
         self.go_forward()
@@ -80,12 +84,18 @@ class Controller():
         print("Mode changed to ", mode)
 
     def set_speed(self, speed):
+        if speed > 100:
+            speed = 100
+        elif speed < 0:
+            speed = 0
         self.speed = speed
         print("Speed changed to ", speed)
 
     def go_forward(self):
         self.set_right_side(self.speed)
         self.set_left_side(self.speed)
+        if debug:
+            print("Forward")
 
     def go_back(self):
         self.set_right_side(-self.speed)
@@ -94,14 +104,20 @@ class Controller():
     def go_right(self):
         self.set_right_side(self.speed)
         self.set_left_side(-self.speed)
+        if debug:
+            print("Right")
 
     def go_left(self):
         self.set_right_side(-self.speed)
         self.set_left_side(self.speed)
+        if debug:
+            print("Left")
 
     def go_stop(self):
         self.set_right_side(0.0)
         self.set_left_side(0.0)
+        if debug:
+            print("Stop")
 
     # Right side control
     def set_right_side(self, speed):
@@ -149,12 +165,24 @@ serial = SerialCommunication(serial_port, debug)
 controller = Controller(serial)
 
 # Create Communication instance
-communication = comunication.Receiver(server_address, server_port, controller)
+communication = comunication.ReceiverController(server_address, server_port, controller)
 
 
 # Start listening for incoming commands in a separate thread
 listener_thread = threading.Thread(target=communication.listen, daemon=True)
 listener_thread.start()
 
-# Start sending controller data independently
-communication.controller.controller_data_sender()
+# Start sending controller data independently in a separate thread
+sender_thread = threading.Thread(target=controller.controller_data_sender)
+sender_thread.start()
+
+
+# Handle Ctrl+C gracefully
+try:
+    while True:
+        time.sleep(1)
+except KeyboardInterrupt:
+    del communication
+    del serial
+    del controller
+    print("\nCtrl+C detected. Exiting gracefully...")

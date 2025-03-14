@@ -18,13 +18,18 @@ class Transceiver:
         finally:
             client.close()  # Close the socket after sending the message
 
-class Receiver:
+class ReceiverController:
     def __init__(self, ip, port, controller):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind((ip, port))
         self.server.listen(1)
         self.controller = controller
         self.running = True
+
+    def __del__(self):
+        print("Server stopped.")
+        self.soft_kill()
+
 
     def listen(self):
         while self.running:
@@ -43,6 +48,13 @@ class Receiver:
             if data[0] == "M":
                 self.controller.set_mode(int(data[1]))
 
+            elif data[0] == "S":
+                if len(data) == 1:
+                    self.controller.go_stop()
+                else:
+                    self.controller.set_speed(int(data[1:4]))
+                return
+
             if self.controller.mode == 1:
                 if data[0] == "F":
                     self.controller.go_forward()
@@ -56,12 +68,6 @@ class Receiver:
                 elif data[0] == "L":
                     self.controller.go_left()
                     return
-                elif data[0] == "S":
-                    if len(data) == 1:
-                        self.controller.go_stop()
-                    else:
-                        self.controller.set_speed(int(data[1:4]))
-                    return
             elif self.controller.mode == 4:
                 if data[0] == "E":
                     self.controller.follower.set_error(int(data[1:5]))
@@ -72,3 +78,27 @@ class Receiver:
                 print("Unknown command")
         except Exception as e:
             print("Message error:", data, "Error:", str(e))
+
+class Receiver:
+    def __init__(self, ip, port):
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server.bind((ip, port))
+        self.server.listen(1)
+        self.running = True
+        self.data = []
+
+
+    def __del__(self):
+        print("Server stopped.")
+        self.soft_kill()
+
+    def listen(self):
+        while self.running:
+            self.conn, self.addr = self.server.accept()
+            self.data = self.conn.recv(1024).decode()
+            self.conn.close()
+
+    def soft_kill(self):
+        self.running = False
+        self.conn.close()
+

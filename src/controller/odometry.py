@@ -12,7 +12,6 @@ class ChainDriveOdometry:
         self.x = 0.0  # X position (meters)
         self.y = 0.0  # Y position (meters)
         self.theta = 0.0  # Orientation (radians)
-        self.factor = 0.006
 
         self.wheelbase = 0.19  # Distance between chains
         self.current_time = time.time()
@@ -23,8 +22,6 @@ class ChainDriveOdometry:
         :param v_left: Commanded velocity of left chain (m/s).
         :param v_right: Commanded velocity of right chain (m/s).
         """
-        v_left = v_left * self.factor
-        v_right = v_right * self.factor
         self.actual_time = time.time()
         self.dt = self.actual_time - self.current_time
         self.current_time = self.actual_time
