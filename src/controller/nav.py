@@ -1,16 +1,11 @@
 import comunication
 import time
 import threading
+import socket_source
 
-ip_address = '127.0.0.1'
-ip_address_remote = '192.168.178.22'
-controller_port = 3000
-state_port = 5001
-remote_port = 6001
-
-communication_controller = comunication.Transceiver(ip_address, controller_port)
-communication_state = comunication.Receiver(ip_address, state_port)
-communication_remote = comunication.Receiver(ip_address_remote, remote_port)
+communication_controller = comunication.Transceiver(socket_source.local_host_address, socket_source.controller_port)
+communication_state = comunication.Receiver(socket_source.local_host_address, socket_source.state_port)
+communication_remote = comunication.Receiver(socket_source.remote_host_address, socket_source.remote_port)
 
 class Manager:
     def __init__(self
@@ -56,8 +51,6 @@ class Manager:
 
 class RemoteController:
     def __init__(self):
-        self.ip_address = ip_address
-        self.controller_port = controller_port
         self.remote_control = False
         self.running = True
 
