@@ -7,7 +7,7 @@ import odometry
 
 serial_port = "/dev/ttyUSB0"
 server_address = "127.0.0.1"
-server_port = 5000
+server_port = 6000
 debug = False
 # MODE:
 # 1 - Forward, Backward, Turn left, Turn right control
@@ -71,7 +71,7 @@ class Controller():
 
     def odometry_test(self):
         self.go_forward()
-        time.sleep(10)
+        time.sleep(100)
         self.go_stop()
         print(self.odom.get_position())
 
@@ -124,11 +124,11 @@ class Controller():
         while self.running:
             if not debug:
                 self.serial.send_data(f":ML={self.left_speed}!")
-                self.serial.send_data(f":MR={self.right_speed}!")
+                #self.serial.send_data(f":MR={self.right_speed}!")
                 self.odom.update(self.left_speed_odom, self.right_speed_odom)
 
-            print(f":ML={self.left_speed}!")
-            print(f":MR={self.right_speed}!")
+            #print(f":ML={self.left_speed}!")
+            #print(f":MR={self.right_speed}!")
             time.sleep(0.02)  # Send data every 20ms
 
 
