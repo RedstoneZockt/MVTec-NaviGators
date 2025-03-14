@@ -105,7 +105,7 @@ class Receiver:
         self.server.bind((ip, port))
         self.server.listen(1)
         self.running = True
-        self.data = []
+        self.data = ""
 
 
     def __del__(self):

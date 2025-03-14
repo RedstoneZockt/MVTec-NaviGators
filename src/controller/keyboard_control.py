@@ -1,20 +1,31 @@
 import keyboard
 import comunication
+import time
 
 
-speed = 50
+speed = 80
 
-print("Press W/A/S/D to move, Q to quit.")
+print("Press W/A/S/D to move, R to increase speed, F to decrease speed,  Q to quit.")
 
 
-communication = comunication.Transceiver('127.0.0.1', 3000)
+communication = comunication.Transceiver('127.0.0.1', 6000)
 communication.send_data('S' + str(speed))
 
 while True:
     # Forward
+    if keyboard.is_pressed('r'):
+        speed = speed + 5
+        if speed > 100:
+            speed = 100
+        communication.send_data('S' + str(speed))
+    if keyboard.is_pressed('f'):
+        speed = speed - 5
+        if speed < 0:
+            speed = 0
+        communication.send_data('S' + str(speed))
+
     if keyboard.is_pressed("w"):
         communication.send_data('F')
-        print("Forward")
 
     # Backward
     elif keyboard.is_pressed("s"):
@@ -36,3 +47,5 @@ while True:
     # Stop
     else:
         communication.send_data('S')
+
+    time.sleep(0.02)
