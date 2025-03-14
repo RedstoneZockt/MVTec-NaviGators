@@ -3,6 +3,7 @@ import os
 from loguru import logger
 import ast
 from dotenv import load_dotenv
+import serial
 
 load_dotenv()
 
@@ -11,7 +12,7 @@ DLMODELPATH = os.getenv("DLMODELPATH")
 DICTPATH = os.getenv("DICTPATH")
 RUNTIME = os.getenv("RUNTIME")
 
-def main():
+def get_trash_positions():
 
     # load program from path
     program = ha.HDevProgram(os.path.join(DIRPATH, 'Halcon_Programm_Detection.hdev'))
@@ -48,36 +49,50 @@ def main():
     proc_call.execute()
     dl_device_handle = proc_call.get_output_control_param_by_name('DLDeviceHandles')
 
-    while True:
-        # call detect_objects procedure
-        detect_objects_procedure = ha.HDevProcedure.load_local(program, 'detect_objects')
-        proc_call = ha.HDevProcedureCall(detect_objects_procedure)
-        proc_call.set_input_control_param_by_name('AcqHandle', acq_handle)
-        proc_call.set_input_control_param_by_name('DictHandle', dict_handle)
-        proc_call.set_input_control_param_by_name('DLModelHandle', dl_model_handle)
-        proc_call.execute()
-        dl_result = proc_call.get_output_control_param_by_name('DLResult')
-        json_dict = proc_call.get_output_control_param_by_name('JsonString')
+    # call detect_objects procedure
+    detect_objects_procedure = ha.HDevProcedure.load_local(program, 'detect_objects')
+    proc_call = ha.HDevProcedureCall(detect_objects_procedure)
+    proc_call.set_input_control_param_by_name('AcqHandle', acq_handle)
+    proc_call.set_input_control_param_by_name('DictHandle', dict_handle)
+    proc_call.set_input_control_param_by_name('DLModelHandle', dl_model_handle)
+    proc_call.execute()
+    dl_result = proc_call.get_output_control_param_by_name('DLResult')
+    json_dict = proc_call.get_output_control_param_by_name('JsonString')
 
-        json_dict = ast.literal_eval(json_dict[0])
-        # logger.debug(f"{json_dict=}")
+    json_dict = ast.literal_eval(json_dict[0])
+    # logger.debug(f"{json_dict=}")
 
-        result = []
-        if 'bbox_class_name' in json_dict and type(json_dict['bbox_class_name']) == list:
-            print(json_dict)
-            for i in range(len(json_dict['bbox_class_name'])):
-                #x_center = (json_dict['bbox_col1'][i] + json_dict['bbox_col2'][i]) / 2
-                x_center = (json_dict['bbox_col1'][i] + ((json_dict['bbox_col2'][i])-(json_dict['bbox_col1'][i]))/2)
-                #y_center = (json_dict['bbox_row1'][i] + json_dict['bbox_row2'][i]) / 2
-                y_center = (json_dict['bbox_row1'][i] + ((json_dict['bbox_row2'][i])-(json_dict['bbox_row1'][i]))/2)
-                result.append([json_dict['bbox_class_name'][i], x_center,y_center])
-        elif 'bbox_class_name' in json_dict and type(json_dict['bbox_col1']) == float:
-            x_center = json_dict['bbox_col1'] + ((json_dict['bbox_col2'] - json_dict['bbox_col1'])) / 2
-            y_center = json_dict['bbox_row1'] + ((json_dict['bbox_row2'] - json_dict['bbox_row1'])) / 2
-            result.append([json_dict['bbox_class_name'], x_center, y_center])
+    result = []
+    if 'bbox_class_name' in json_dict and type(json_dict['bbox_class_name']) == list:
+        for i in range(len(json_dict['bbox_class_name'])):
+            #x_center = (json_dict['bbox_col1'][i] + json_dict['bbox_col2'][i]) / 2
+            x_center = (json_dict['bbox_col1'][i] + ((json_dict['bbox_col2'][i])-(json_dict['bbox_col1'][i]))/2)
+            #y_center = (json_dict['bbox_row1'][i] + json_dict['bbox_row2'][i]) / 2
+            y_center = (json_dict['bbox_row1'][i] + ((json_dict['bbox_row2'][i])-(json_dict['bbox_row1'][i]))/2)
+            result.append([json_dict['bbox_class_name'][i], x_center,y_center])
+    elif 'bbox_class_name' in json_dict and type(json_dict['bbox_col1']) == float:
+        x_center = json_dict['bbox_col1'] + ((json_dict['bbox_col2'] - json_dict['bbox_col1'])) / 2
+        y_center = json_dict['bbox_row1'] + ((json_dict['bbox_row2'] - json_dict['bbox_row1'])) / 2
+        result.append([json_dict['bbox_class_name'], x_center, y_center])
 
-        logger.debug(f"{result=}")
+    # logger.debug(f"{result=}")
+
+    return result
 
 if __name__ == '__main__':
+    ser = serial.Serial("/dev/ttyUSB0")  # open serial port
+    print(ser.name)
+    heart_beat: bool = True
+    
+    while(True):
+        command_heart_beat: str = ":WD=" + str(int(heart_beat)) + "!"
+        serial_con.write(command_heart_beat.encode())
+        
+        result = get_trash_positions()
+        sorted_data_by_x = sorted(result, key=lambda item: abs(item[1] - 250))
+        
+        target_x: int = sorted_data_by_x[0][1]
+        print(target_coordinate)
+        diff = 250 - target_x
 
-    main()
+        
