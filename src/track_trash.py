@@ -89,10 +89,7 @@ if __name__ == '__main__':
         serial_con.write(command_heart_beat.encode())
         
         result = get_trash_positions()
-        sorted_data_by_x = sorted(result, key=lambda item: abs(item[1] - 250))
+        sorted_data_by_nearest = sorted(result, key=lambda item: item[2], reverse=True)
         
-        target_x: int = sorted_data_by_x[0][1]
+        target = sorted_data_by_nearest[0]
         print(target_coordinate)
-        diff = 250 - target_x
-
-        
