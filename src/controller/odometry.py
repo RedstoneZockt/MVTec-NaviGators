@@ -1,7 +1,9 @@
 import math
+import time
+
 
 class ChainDriveOdometry:
-    def __init__(self, dt):
+    def __init__(self):
         """
         Initialize the odometry system.
         :param wheelbase: Distance between the left and right chain (meters).
@@ -12,7 +14,7 @@ class ChainDriveOdometry:
         self.theta = 0.0  # Orientation (radians)
 
         self.wheelbase = 0.19  # Distance between chains
-        self.dt = dt  # Time step
+        self.current_time = time.time()
 
     def update(self, v_left, v_right):
         """
@@ -20,6 +22,9 @@ class ChainDriveOdometry:
         :param v_left: Commanded velocity of left chain (m/s).
         :param v_right: Commanded velocity of right chain (m/s).
         """
+        self.actual_time = time.time()
+        self.dt = self.actual_time - self.current_time
+        self.current_time = self.actual_time
         # Compute linear and angular velocity
         v = (v_left + v_right) / 2.0  # Linear velocity
         omega = (v_right - v_left) / self.wheelbase  # Angular velocity

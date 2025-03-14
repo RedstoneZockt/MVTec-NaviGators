@@ -1,69 +1,79 @@
 import socket
 import serial
 import time
+import threading
+import comunication
+import odometry
 
-
+serial_port = "/dev/ttyUSB0"
+server_address = "127.0.0.1"
+server_port = 5000
+debug = False
 # MODE:
 # 1 - Forward, Backward, Turn left, Turn right control
 # 2 - To goal controller
 # 3 - To goal controller with obstacles collision avoid
+# 4 - Follower
+# 5 - Odometry test
 
-# Socket communication for parts of the code
-class Communication():
-    def __init__(self, ip, port):
-        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server.bind((ip, port))
-        self.server.listen(1)
-        self.controller = Controller()
 
-    def listen(self):
-        conn, addr = self.server.accept()
-        data = conn.recv(1024)
-        conn.close()
-        return data.decode()
+class FollowerController():
+    def __init__(self):
+        self.Kp = 1.0
+        self.Ki = 0.0
+        self.error = 0.0
+        self.base_speed = 0.0
 
-    def data_recognition_controller(self, data):
-        try:
-            if data[0] == "M":
-                self.controller.set_mode(int(data[1]))
-            elif data[0] == "F":
-                self.controller.go_forward()
-            elif data[0] == "B":
-                self.controller.go_back()
-            elif data[0] == "R":
-                self.controller.go_right()
-            elif data[0] == "L":
-                self.controller.go_left()
-            elif data[0] == "S":
-                if (len(data) == 1):
-                    self.controller.go_stop()
-                else:
-                    self.controller.set_speed(int(data[1:4]))
-            else:
-                print("Unknown command")
-        except:
-            print("Message error:", data)
+        self.right_chain_speed = 0.0
+        self.left_chain_speed = 0.0
+
+    def set_error(self, error):
+        self.error = error
+
+    def get_right_chain_speed(self):
+        return self.right_chain_speed
+
+    def get_left_chain_speed(self):
+        return self.left_chain_speed
+
+    def update(self):
+        if self.error > 0.0:
+            self.right_chain_speed = self.base_speed - self.Kp * self.error
+            self.left_chain_speed = self.base_speed
+
+        elif self.error < 0.0:
+            self.right_chain_speed = self.base_speed
+            self.left_chain_speed = self.base_speed - self.Kp * self.error
+
+        else:
+            self.right_chain_speed = self.base_speed
+            self.left_chain_speed = self.base_speed
+
+
 
 
 
 
 class Controller():
-    def __init__(self):
+    def __init__(self, serial):
         self.mode = 1
-        # Goal [x, y]
-        self.goal = [0, 0]
-
-        # Actual position [x, y]
-        self.actual_position = [0, 0]
-
-        # Speed
         self.speed = 0
+        self.serial = serial
+        self.right_speed = self.speed_normalize_function(0)
+        self.left_speed = self.speed_normalize_function(0)
+        self.follower = FollowerController()
+        self.odom = odometry.ChainDriveOdometry()
+        self.left_speed_odom = 0
+        self.right_speed_odom = 0
 
-        #serial
-        self.serial = SerialCommunication("/dev/ttyUSB0")
 
-        self.right_speed = 0
-        self.left_speed = 0
+        self.running = True
+
+    def odometry_test(self):
+        self.go_forward()
+        time.sleep(10)
+        self.go_stop()
+        print(self.odom.get_position())
 
     def set_mode(self, mode):
         self.mode = mode
@@ -93,16 +103,17 @@ class Controller():
         self.set_right_side(0.0)
         self.set_left_side(0.0)
 
-
     # Right side control
     def set_right_side(self, speed):
-        self.left_speed = self.speed_normalize_funcion(speed)
+        self.left_speed = self.speed_normalize_function(speed)
+        self.right_speed_odom = speed
 
     # Left side control
     def set_left_side(self, speed):
-        self.right_speed = self.speed_normalize_funcion(speed)
+        self.right_speed = self.speed_normalize_function(speed)
+        self.left_speed_odom = speed
 
-    def speed_normalize_funcion(self, speed):
+    def speed_normalize_function(self, speed):
         in_min = -100
         in_max = 100
         out_min = 0
@@ -110,30 +121,40 @@ class Controller():
         return (speed - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 
     def controller_data_sender(self):
-        self.serial.send_data(":ML=" + str(self.left_speed) + "!")
-        print(":ML=" + str(self.left_speed) + "!")
-        self.serial.send_data(":MR=" + str(self.right_speed) + "!")
-        print(":MR=" + str(self.right_speed) + "!")
+        while self.running:
+            if not debug:
+                self.serial.send_data(f":ML={self.left_speed}!")
+                self.serial.send_data(f":MR={self.right_speed}!")
+                self.odom.update(self.left_speed_odom, self.right_speed_odom)
+
+            print(f":ML={self.left_speed}!")
+            print(f":MR={self.right_speed}!")
+            time.sleep(0.02)  # Send data every 20ms
 
 
 class SerialCommunication():
-    def __init__(self, port):
-        self.serial0 = serial.Serial(port)
-        self.heart_beat = True
+    def __init__(self, port, debug=False):
+        if not debug:
+            self.serial0 = serial.Serial(port)
+            self.heart_beat = True
 
     def send_data(self, data):
-        command_heart_beat: str = ":WD=" + str(int(self.heart_beat)) + "!"
+        command_heart_beat = f":WD={int(self.heart_beat)}!"
         self.serial0.write(command_heart_beat.encode())
         self.serial0.write(data.encode())
         self.heart_beat = not self.heart_beat
 
-communication = Communication("192.168.178.22", 5000)
 
-while True:
-    data = communication.listen()
-    communication.data_recognition_controller(data)
-    communication.controller.controller_data_sender()
+serial = SerialCommunication(serial_port, debug)
+controller = Controller(serial)
 
-
+# Create Communication instance
+communication = comunication.Receiver(server_address, server_port, controller)
 
 
+# Start listening for incoming commands in a separate thread
+listener_thread = threading.Thread(target=communication.listen, daemon=True)
+listener_thread.start()
+
+# Start sending controller data independently
+communication.controller.controller_data_sender()

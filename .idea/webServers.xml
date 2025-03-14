@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="b013ba40-bd2b-4caa-8fbb-9b03aad00c84" name="makeathon">
+        <fileTransfer accessType="SFTP" host="makeathon@192.168.178.22" port="22" sshConfigId="fb769fc3-8518-45da-87b4-ff05cd9dc700" sshConfig="makeathon@makeathon@192.168.178.22:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" isUseSudo="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
