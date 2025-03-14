@@ -60,23 +60,23 @@ def main():
         json_dict = proc_call.get_output_control_param_by_name('JsonString')
 
         json_dict = ast.literal_eval(json_dict[0])
-        # logger.debug(f"{json_dict=}")
+        # # logger.debug(f"{json_dict=}")
+        #
+        # result = []
+        # if 'bbox_class_name' in json_dict and type(json_dict['bbox_class_name']) == list:
+        #     print(json_dict)
+        #     for i in range(len(json_dict['bbox_class_name'])):
+        #         #x_center = (json_dict['bbox_col1'][i] + json_dict['bbox_col2'][i]) / 2
+        #         x_center = (json_dict['bbox_col1'][i] + ((json_dict['bbox_col2'][i])-(json_dict['bbox_col1'][i]))/2)
+        #         #y_center = (json_dict['bbox_row1'][i] + json_dict['bbox_row2'][i]) / 2
+        #         y_center = (json_dict['bbox_row1'][i] + ((json_dict['bbox_row2'][i])-(json_dict['bbox_row1'][i]))/2)
+        #         result.append([json_dict['bbox_class_name'][i], x_center,y_center])
+        # elif 'bbox_class_name' in json_dict and type(json_dict['bbox_col1']) == float:
+        #     x_center = json_dict['bbox_col1'] + ((json_dict['bbox_col2'] - json_dict['bbox_col1'])) / 2
+        #     y_center = json_dict['bbox_row1'] + ((json_dict['bbox_row2'] - json_dict['bbox_row1'])) / 2
+        #     result.append([json_dict['bbox_class_name'], x_center, y_center])
 
-        result = []
-        if 'bbox_class_name' in json_dict and type(json_dict['bbox_class_name']) == list:
-            print(json_dict)
-            for i in range(len(json_dict['bbox_class_name'])):
-                #x_center = (json_dict['bbox_col1'][i] + json_dict['bbox_col2'][i]) / 2
-                x_center = (json_dict['bbox_col1'][i] + ((json_dict['bbox_col2'][i])-(json_dict['bbox_col1'][i]))/2)
-                #y_center = (json_dict['bbox_row1'][i] + json_dict['bbox_row2'][i]) / 2
-                y_center = (json_dict['bbox_row1'][i] + ((json_dict['bbox_row2'][i])-(json_dict['bbox_row1'][i]))/2)
-                result.append([json_dict['bbox_class_name'][i], x_center,y_center])
-        elif 'bbox_class_name' in json_dict and type(json_dict['bbox_col1']) == float:
-            x_center = json_dict['bbox_col1'] + ((json_dict['bbox_col2'] - json_dict['bbox_col1'])) / 2
-            y_center = json_dict['bbox_row1'] + ((json_dict['bbox_row2'] - json_dict['bbox_row1'])) / 2
-            result.append([json_dict['bbox_class_name'], x_center, y_center])
-
-        logger.debug(f"{result=}")
+        logger.debug(f"{json_dict=}")
 
 if __name__ == '__main__':
 

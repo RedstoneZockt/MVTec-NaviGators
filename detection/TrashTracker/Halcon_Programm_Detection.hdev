@@ -98,12 +98,30 @@
 </oc>
 </interface>
 <body>
+<l>CamParam:=['area_scan_division', 0.00462464, -15265.5, 4.50083e-06, 4.5e-06, 773.126, 581.373, 1600, 1200]</l>
+<l>Pose:=[-0.00564038, 0.0725761, 0.339958, 300.887, 357.581, 180.786, 0]</l>
 <l>    grab_image_async (Image, AcqHandle, -1)</l>
 <l>    *read_image (Image, ImageFilesShuffled[IndexInference])</l>
 <l>    gen_dl_samples_from_images (Image, DLSampleInference)</l>
 <l>    preprocess_dl_samples (DLSampleInference, DictHandle)</l>
 <l>    apply_dl_model (DLModelHandle, DLSampleInference, [], DLResult)</l>
+<c>    </c>
+<c>    </c>
+<l>    if(DLResult!=[])</l>
+<l>        NumberResults:=|DLResult.bbox_row1|</l>
+<l>        for I := 0 to NumberResults-1 by 1</l>
+<l>           BoxCenterRow:=DLResult.bbox_row1[I]+(DLResult.bbox_row2[I]-DLResult.bbox_row1[I])/2.0</l>
+<l>           BoxCenterCol:=DLResult.bbox_col1[I]+(DLResult.bbox_col2[I]-DLResult.bbox_col1[I])/2.0</l>
+<l>           DLResult.BoxCenterRow[I] := BoxCenterRow</l>
+<l>           DLResult.BoxCenterCol[I] := BoxCenterCol</l>
+<l>           image_points_to_world_plane (CamParam, Pose, BoxCenterRow,BoxCenterCol, 'm', X, Y)</l>
+<l>           DLResult.world_x[I]:=X</l>
+<l>           DLResult.world_y[I]:=Y</l>
+<l>       endfor</l>
+<l>    endif</l>
+<c></c>
 <l>    dict_to_json (DLResult, [], [], JsonString)</l>
+<c>    </c>
 <l>return ()</l>
 </body>
 <docu id="detect_objects">
