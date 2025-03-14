@@ -8,7 +8,7 @@ import sys
 
 serial_port = "/dev/ttyUSB0"
 server_address = "127.0.0.1"
-server_port = 4000
+server_port = 3000
 debug = False
 # MODE:
 # 1 - Forward, Backward, Turn left, Turn right control
@@ -16,6 +16,59 @@ debug = False
 # 3 - To goal controller with obstacles collision avoid
 # 4 - Follower
 # 5 - Odometry test
+# 6 - Differential Drive
+
+class DifferentialController():
+    def __init__(self):
+        self.gain_linear = 10.0
+        self.gain_angular = 10.0
+
+
+        self.distance = 0.0
+        self.angle = 0.0
+
+        self.right_chain_speed = 0.0
+        self.left_chain_speed = 0.0
+
+    def set_distance(self, distance):
+        self.distance = distance/100
+    def set_angle(self, angle):
+        self.angle = angle/100
+
+    def set_gain_linear(self, gain_linear):
+        self.gain_linear = gain_linear/100
+        print("Linear gain change: ", self.gain_linear)
+
+
+    def set_gain_angular(self, gain_angular):
+        self.gain_angular = gain_angular/100
+        print("Angular gain change: ", self.gain_angular)
+
+    def update(self):
+        linear_velocity = self.gain_linear * self.distance
+        if linear_velocity > 100:
+            linear_velocity = 100
+        elif linear_velocity < -100:
+            linear_velocity = -100
+
+        if self.angle > 0.0:
+            self.right_chain_speed = linear_velocity - self.gain_angular * self.angle
+            self.left_chain_speed = linear_velocity
+
+        elif self.angle < 0.0:
+            self.right_chain_speed = linear_velocity
+            self.left_chain_speed = linear_velocity - self.gain_angular * self.angle
+
+        else:
+            self.right_chain_speed = linear_velocity
+            self.left_chain_speed = linear_velocity
+
+        print("Distance: " + str(self.distance))
+        print("Angle: " + str(self.angle))
+        print("Right chain: " + str(self.right_chain_speed))
+        print("Light chain: " + str(self.left_chain_speed))
+
+
 
 
 class FollowerController():
@@ -30,12 +83,6 @@ class FollowerController():
 
     def set_error(self, error):
         self.error = error
-
-    def get_right_chain_speed(self):
-        return self.right_chain_speed
-
-    def get_left_chain_speed(self):
-        return self.left_chain_speed
 
     def update(self):
         if self.error > 0.0:
@@ -63,6 +110,7 @@ class Controller():
         self.right_speed = self.speed_normalize_function(0)
         self.left_speed = self.speed_normalize_function(0)
         self.follower = FollowerController()
+        self.differential = DifferentialController()
         self.odom = odometry.ChainDriveOdometry()
         self.left_speed_odom = 0
         self.right_speed_odom = 0
@@ -72,6 +120,11 @@ class Controller():
 
     def __del__(self):
         self.running = False
+
+    def differential_update(self):
+        self.differential.update()
+        self.set_left_side(self.differential.left_chain_speed)
+        self.set_right_side(self.differential.right_chain_speed)
 
     def odometry_test(self):
         self.go_forward()

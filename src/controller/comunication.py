@@ -70,10 +70,23 @@ class ReceiverController:
                     return
             elif self.controller.mode == 4:
                 if data[0] == "E":
-                    self.controller.follower.set_error(int(data[1:5]))
+                    self.controller.error_update(int(data[1:]))
+                if data[0] == "P":
+                    self.controller.follower.set_Pgain(int(data[1:]))
             elif self.controller.mode == 5:
                 if data[0] == "R":
                     self.controller.odometry_test()
+            elif self.controller.mode == 6:
+                if data[0] == "A":
+                    self.controller.differential.set_angle(int(data[1:]))
+                    self.controller.differential_update()
+                elif data[0] == "D":
+                    self.controller.differential.set_distance(int(data[1:]))
+                    self.controller.differential_update()
+                elif data[0] == "P":
+                    self.controller.differential.set_gain_linear(int(data[1:]))
+                elif data[0] == "L":
+                    self.controller.differential.set_gain_angular(int(data[1:]))
             else:
                 print("Unknown command")
         except Exception as e:
