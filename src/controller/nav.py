@@ -10,7 +10,8 @@ communication_controller = comunication.Transceiver(ip_address, controller_port)
 communication_search = comunication.Receiver(ip_address, search_algorithm_port)
 
 class Manager:
-    def __init__(self, search):
+    def __init__(self
+                 , search):
         self.search = search
         self.running = True
 
@@ -23,6 +24,7 @@ class Manager:
                 self.search.searching = True
             elif communication_search.data == "Found":
                 self.search.searching = False
+                communication_controller.send_data("S")
 
 
 
@@ -50,6 +52,7 @@ class SearchAlgorithm:
                 i+=1
                 if i == len(self.searching_command_list):
                     i = 0
+
 
 
     def interval_sender(self, duration, interval, command):
