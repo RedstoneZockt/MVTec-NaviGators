@@ -1,5 +1,5 @@
 import socket
-import serial
+#import serial
 import time
 import threading
 import comunication
@@ -9,7 +9,7 @@ import sys
 serial_port = "/dev/ttyUSB0"
 server_address = "127.0.0.1"
 server_port = 3000
-debug = False
+debug = True
 # MODE:
 # 1 - Forward, Backward, Turn left, Turn right control
 # 2 - To goal controller
@@ -23,6 +23,7 @@ class DifferentialController():
         self.gain_linear = 10.0
         self.gain_angular = 10.0
 
+        self.max_speed = 100.0
 
         self.distance = 0.0
         self.angle = 0.0
@@ -46,10 +47,10 @@ class DifferentialController():
 
     def update(self):
         linear_velocity = self.gain_linear * self.distance
-        if linear_velocity > 100:
-            linear_velocity = 100
-        elif linear_velocity < -100:
-            linear_velocity = -100
+        if linear_velocity > self.max_speed:
+            linear_velocity = self.max_speed
+        elif linear_velocity < - self.max_speed:
+            linear_velocity = -self.max_speed
 
         if self.angle > 0.0:
             self.right_chain_speed = linear_velocity - self.gain_angular * self.angle
@@ -67,6 +68,7 @@ class DifferentialController():
         print("Angle: " + str(self.angle))
         print("Right chain: " + str(self.right_chain_speed))
         print("Light chain: " + str(self.left_chain_speed))
+        print("Max speed: " + str(self.max_speed))
 
 
 
@@ -142,6 +144,7 @@ class Controller():
         elif speed < 0:
             speed = 0
         self.speed = speed
+        self.differential.max_speed = speed
         print("Speed changed to ", speed)
 
     def go_forward(self):
