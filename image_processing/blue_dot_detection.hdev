@@ -56,7 +56,7 @@
 </oc>
 </interface>
 <body>
-<l as_id="image_acquisition" as_name="Image Acquisition 01" as_grp="[1,1]" as_ord="2">open_framegrabber ('USB3Vision', 0, 0, 0, 0, 0, 0, 'progressive', -1, 'default', -1, 'false', 'default', '1409000BFC26_IDSImagingDevelopmentSystemsGmbH_U33250MLCHQ', 0, -1, AcqHandle)</l>
+<l as_id="image_acquisition" as_name="Image Acquisition 01" as_grp="[1,1]" as_ord="2">open_framegrabber ('USB3Vision', 0, 0, 0, 0, 0, 0, 'progressive', -1, 'default', -1, 'false', 'default', '1409000BFC2F_IDSImagingDevelopmentSystemsGmbH_U33250MLCHQ', 0, -1, AcqHandle)</l>
 <l>return ()</l>
 </body>
 <docu id="init_acq">
