@@ -4,6 +4,7 @@ from loguru import logger
 import ast
 from dotenv import load_dotenv
 import serial
+import math
 
 load_dotenv()
 
@@ -60,24 +61,37 @@ def get_trash_positions():
     json_dict = proc_call.get_output_control_param_by_name('JsonString')
 
     json_dict = ast.literal_eval(json_dict[0])
-    # logger.debug(f"{json_dict=}")
+    logger.debug(f"{json_dict=}")
 
-    result = []
-    if 'bbox_class_name' in json_dict and type(json_dict['bbox_class_name']) == list:
-        for i in range(len(json_dict['bbox_class_name'])):
-            #x_center = (json_dict['bbox_col1'][i] + json_dict['bbox_col2'][i]) / 2
-            x_center = (json_dict['bbox_col1'][i] + ((json_dict['bbox_col2'][i])-(json_dict['bbox_col1'][i]))/2)
-            #y_center = (json_dict['bbox_row1'][i] + json_dict['bbox_row2'][i]) / 2
-            y_center = (json_dict['bbox_row1'][i] + ((json_dict['bbox_row2'][i])-(json_dict['bbox_row1'][i]))/2)
-            result.append([json_dict['bbox_class_name'][i], x_center,y_center])
-    elif 'bbox_class_name' in json_dict and type(json_dict['bbox_col1']) == float:
-        x_center = json_dict['bbox_col1'] + ((json_dict['bbox_col2'] - json_dict['bbox_col1'])) / 2
-        y_center = json_dict['bbox_row1'] + ((json_dict['bbox_row2'] - json_dict['bbox_row1'])) / 2
-        result.append([json_dict['bbox_class_name'], x_center, y_center])
 
-    # logger.debug(f"{result=}")
+    target_x_value = 0.0
+    target_y_value = 0.0
+    print(type(json_dict['world_x']))
+    if type(json_dict['world_x']) == list:
+        x_positions = json_dict['world_x']
+        y_positions = json_dict['world_y']
 
-    return result
+        smallest_y_value = sorted(y_positions)[0]
+        index_of_smallest_y_value = y_positions.index(smallest_y_value)
+
+        target_y_value = smallest_y_value
+        target_x_value = x_positions[index_of_smallest_y_value]
+
+    elif type(json_dict['world_x']) == float:
+        target_y_value = json_dict['world_x']
+        target_x_value = json_dict['world_y']
+
+    print(target_x_value)
+    print(target_y_value)
+
+    # Add another 0.25m to the y distance
+    # The camera detects all objects in a coordinate system in front of the robot
+    # The origin of the CS is aroung 0.10m in front of the robot and the center of the robot adds another 0.15m
+    target_y_value = target_y_value + 0.25 
+    
+    angle_diff = math.atan(target_x_value/target_y_value)
+    print(angle_diff)
+
 
 if __name__ == '__main__':
     ser = serial.Serial("/dev/ttyUSB0")  # open serial port
@@ -86,10 +100,11 @@ if __name__ == '__main__':
     
     while(True):
         command_heart_beat: str = ":WD=" + str(int(heart_beat)) + "!"
-        serial_con.write(command_heart_beat.encode())
+        ser.write(command_heart_beat.encode())
         
-        result = get_trash_positions()
-        sorted_data_by_nearest = sorted(result, key=lambda item: item[2], reverse=True)
+        get_trash_positions()
+        # sorted_data_by_nearest = sorted(result, key=lambda item: item[2], reverse=True)
         
-        target = sorted_data_by_nearest[0]
-        print(target_coordinate)
+        # target = sorted_data_by_nearest[0]
+        # print(sorted_data_by_nearest)
+        # print(target)
