@@ -1,5 +1,5 @@
 import socket
-#import serial
+import serial
 import time
 import threading
 import comunication
@@ -9,7 +9,7 @@ import sys
 serial_port = "/dev/ttyUSB0"
 server_address = "127.0.0.1"
 server_port = 3000
-debug = True
+debug = False
 # MODE:
 # 1 - Forward, Backward, Turn left, Turn right control
 # 2 - To goal controller

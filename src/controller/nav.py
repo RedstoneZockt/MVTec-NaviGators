@@ -3,11 +3,10 @@ import time
 import threading
 
 ip_address = '127.0.0.1'
-# ip_address_remote = '192.168.178.22'
-ip_address_remote = '127.0.0.1'
+ip_address_remote = '192.168.178.22'
 controller_port = 3000
-state_port = 5000
-remote_port = 6000
+state_port = 5001
+remote_port = 6001
 
 communication_controller = comunication.Transceiver(ip_address, controller_port)
 communication_state = comunication.Receiver(ip_address, state_port)
@@ -29,21 +28,29 @@ class Manager:
                 communication_controller.send_data("S")
                 self.remote.remote_control = False
                 self.search.searching = True
+                print("Searching")
 
             elif communication_state.data == "f":
                 communication_controller.send_data("S")
                 self.search.i = 0
                 self.search.searching = False
+                self.remote.remote_control = False
+                print("Found")
 
             elif communication_state.data == "r":
                 communication_controller.send_data("S")
                 self.search.searching = False
                 self.remote.remote_control = True
+                print("Remote")
 
             elif communication_state.data == "a":
                 communication_controller.send_data("S")
                 self.search.searching = False
                 self.remote.remote_control = False
+                print("Autonomous")
+
+            communication_state.data = ""
+            time.sleep(0.1)
 
 
 
@@ -70,7 +77,7 @@ class SearchAlgorithm:
         self.searching = False
         self.running = True
         self.turning_time = 0.5
-        self.forward_time = 1
+        self.forward_time = 1.0
         self.forward_speed = 50
         self.turning_speed = 100
         self.i = 0

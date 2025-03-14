@@ -66,8 +66,7 @@ def get_trash_positions():
 
     target_x_value = 0.0
     target_y_value = 0.0
-    print(type(json_dict['world_x']))
-    if type(json_dict['world_x']) == list:
+    if 'world_y' in json_dict and 'world_x' in json_dict and type(json_dict['world_x']) == list:
         x_positions = json_dict['world_x']
         y_positions = json_dict['world_y']
 
@@ -77,7 +76,7 @@ def get_trash_positions():
         target_y_value = smallest_y_value
         target_x_value = x_positions[index_of_smallest_y_value]
 
-    elif type(json_dict['world_x']) == float:
+    elif 'world_y' in json_dict and 'world_x' in json_dict and type(json_dict['world_x']) == float:
         target_y_value = json_dict['world_x']
         target_x_value = json_dict['world_y']
 
@@ -89,8 +88,9 @@ def get_trash_positions():
     # The origin of the CS is aroung 0.10m in front of the robot and the center of the robot adds another 0.15m
     target_y_value = target_y_value + 0.25 
     
-    angle_diff = math.atan(target_x_value/target_y_value)
-    print(angle_diff)
+    angle_diff = math.atan2(target_x_value, target_y_value)
+    angle_degree = math.degrees(angle_diff)
+    print(angle_degree)
 
 
 if __name__ == '__main__':
