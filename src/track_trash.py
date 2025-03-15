@@ -84,8 +84,6 @@ def get_trash_positions():
     elif 'world_y' in json_dict and 'world_x' in json_dict and type(json_dict['world_x']) == float:
         target_y_value = json_dict['world_x']
         target_x_value = json_dict['world_y']
-    else
-        return None
 
     else:
         return None, None
@@ -103,8 +101,6 @@ def get_trash_positions():
     distance = pow(pow(target_x_value, 2) + pow(target_y_value, 2), 0.5)
 
     return angle_diff, distance
-
-    return angle_diff
 
 
 if __name__ == '__main__':
