@@ -83,10 +83,12 @@ class ReceiverController:
                 # angle
                 if data[0] == "A":
                     self.controller.differential.set_angle(int(data[1:]))
+                    self.controller.odometry_reset()
 
                 # distance
                 elif data[0] == "D":
                     self.controller.differential.set_distance(int(data[1:]))
+                    self.controller.odometry_reset()
 
                 # linear gain
                 elif data[0] == "P":

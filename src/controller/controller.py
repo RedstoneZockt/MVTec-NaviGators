@@ -17,8 +17,8 @@ debug = False
 
 class DifferentialController():
     def __init__(self):
-        self.gain_linear = 10.0
-        self.gain_angular = 10.0
+        self.gain_linear = 1000.0
+        self.gain_angular = 1000.0
 
         self.max_speed = 100.0
 
@@ -32,11 +32,14 @@ class DifferentialController():
         self.left_chain_speed = 0.0
 
     def error_calculation(self, distance, angle):
-        self.distance_error = self.distance - distance
-        self.angle_error = self.angle - angle
+        if self.distance != 0.0:
+            self.distance_error = self.distance - distance
+        if self.angle != 0.0:
+            self.angle_error = self.angle - angle
 
     def set_distance(self, distance):
         self.distance = distance/100
+
     def set_angle(self, angle):
         self.angle = angle/100
 
@@ -50,6 +53,8 @@ class DifferentialController():
         print("Angular gain change: ", self.gain_angular)
 
     def update(self, distance, angle):
+        #print("angle error: ", self.angle_error)
+        #print("angle: ", self.angle)
         self.error_calculation(distance, angle)
         linear_velocity = 0
         if abs(self.distance_error) > 0.1:
@@ -59,24 +64,41 @@ class DifferentialController():
         elif linear_velocity < - self.max_speed:
             linear_velocity = -self.max_speed
 
-        if self.angle_error > 0.1:
-            self.right_chain_speed = linear_velocity - self.gain_angular * self.angle_error
-            self.left_chain_speed = linear_velocity
+        if self.angle_error > 0.2:
+            right_chain_speed_ = linear_velocity - self.gain_angular * self.angle_error
+            left_chain_speed_ = linear_velocity + self.gain_angular * self.angle_error
 
-        elif self.angle_error < -0.1:
-            self.right_chain_speed = linear_velocity
-            self.left_chain_speed = linear_velocity - self.gain_angular * self.angle_error
+        elif self.angle_error < -0.2:
+            right_chain_speed_ = linear_velocity + self.gain_angular * self.angle_error
+            left_chain_speed_ = linear_velocity - self.gain_angular * self.angle_error
 
         else:
-            self.right_chain_speed = linear_velocity
-            self.left_chain_speed = linear_velocity
+            right_chain_speed_ = linear_velocity
+            left_chain_speed_ = linear_velocity
 
-        print("Distance: " + str(self.distance))
-        print("Angle: " + str(self.angle))
-        print("Distamce error: " + str(self.distance_error))
-        print("Angle error: " + str(self.angle_error))
-        print("Right chain: " + str(self.right_chain_speed))
-        print("Light chain: " + str(self.left_chain_speed))
+        if left_chain_speed_ > self.max_speed:
+            left_chain_speed_ = self.max_speed
+        elif left_chain_speed_ < - self.max_speed:
+            left_chain_speed_ = - self.max_speed
+
+        if right_chain_speed_ > self.max_speed:
+            right_chain_speed_ = self.max_speed
+        elif right_chain_speed_ < - self.max_speed:
+            right_chain_speed_ = -self.max_speed
+
+
+        self.right_chain_speed = right_chain_speed_
+        self.left_chain_speed = left_chain_speed_
+
+        # print("Distance: " + str(self.distance))
+        # print("Angle: " + str(self.angle))
+        # print("Distamce error: " + str(self.distance_error))
+        # print("Angle error: " + str(self.angle_error))
+        # print("Right chain: " + str(self.right_chain_speed))
+        # print("Light chain: " + str(self.left_chain_speed))
+        # print("Angular gain: " + str(self.gain_angular))
+        # print("Linear gain: " + str(self.gain_linear))
+        # print("")
 
 
 

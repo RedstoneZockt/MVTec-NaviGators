@@ -14,15 +14,13 @@ class ChainDriveOdometry:
         self.theta = 0.0  # Orientation (radians)
         self.dt = 0.0
         self.actual_time = 0.0
-        self.factor = 0.8
+        self.factor = 0.008
 
         self.wheelbase = 0.19  # Distance between chains
         self.current_time = time.time()
 
     def reset_odometry(self):
         self.current_time = time.time()
-        self.x = 0.0  # X position (meters)
-        self.y = 0.0  # Y position (meters)
         self.distance = 0.0
         self.theta = 0.0  # Orientation (radians)
 
@@ -32,6 +30,10 @@ class ChainDriveOdometry:
         :param v_left: Commanded velocity of left chain (m/s).
         :param v_right: Commanded velocity of right chain (m/s).
         """
+        if v_left != 0 or v_right != 0:
+            print(v_left, v_right)
+        v_left = self.factor * v_left
+        v_right = self.factor * v_right
         self.actual_time = time.time()
         self.dt = self.actual_time - self.current_time
         self.current_time = self.actual_time
@@ -52,6 +54,8 @@ class ChainDriveOdometry:
         while self.theta < -math.pi:
             self.theta += 2 * math.pi
 
+        if v_left != 0 or v_right != 0:
+            print(self.distance, ', ', self.theta)
         return self.distance, self.theta
 
     def get_position(self):
