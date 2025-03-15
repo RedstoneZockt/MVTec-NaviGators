@@ -22,11 +22,18 @@ class DifferentialController():
 
         self.max_speed = 100.0
 
+        self.distance_error = 0.0
+        self.angle_error = 0.0
+
         self.distance = 0.0
         self.angle = 0.0
 
         self.right_chain_speed = 0.0
         self.left_chain_speed = 0.0
+
+    def error_calculation(self, distance, angle):
+        self.distance_error = self.distance - distance
+        self.angle_error = self.angle - angle
 
     def set_distance(self, distance):
         self.distance = distance/100
@@ -42,20 +49,21 @@ class DifferentialController():
         self.gain_angular = gain_angular/100
         print("Angular gain change: ", self.gain_angular)
 
-    def update(self):
-        linear_velocity = self.gain_linear * self.distance
+    def update(self, distance, angle):
+        self.error_calculation(distance, angle)
+        linear_velocity = self.gain_linear * self.distance_error
         if linear_velocity > self.max_speed:
             linear_velocity = self.max_speed
         elif linear_velocity < - self.max_speed:
             linear_velocity = -self.max_speed
 
         if self.angle > 0.0:
-            self.right_chain_speed = linear_velocity - self.gain_angular * self.angle
+            self.right_chain_speed = linear_velocity - self.gain_angular * self.angle_error
             self.left_chain_speed = linear_velocity
 
         elif self.angle < 0.0:
             self.right_chain_speed = linear_velocity
-            self.left_chain_speed = linear_velocity - self.gain_angular * self.angle
+            self.left_chain_speed = linear_velocity - self.gain_angular * self.angle_error
 
         else:
             self.right_chain_speed = linear_velocity
@@ -66,6 +74,7 @@ class DifferentialController():
         print("Right chain: " + str(self.right_chain_speed))
         print("Light chain: " + str(self.left_chain_speed))
         print("Max speed: " + str(self.max_speed))
+
 
 
 
@@ -113,6 +122,10 @@ class Controller():
         self.odom = odometry.ChainDriveOdometry()
         self.left_speed_odom = 0
         self.right_speed_odom = 0
+        self.actual_distance = 0
+        self.actual_angle = 0
+
+        self.internal_odom = True
 
 
         self.running = True
@@ -120,8 +133,13 @@ class Controller():
     def __del__(self):
         self.running = False
 
+    def odometry_reset(self):
+        self.actual_distance = 0
+        self.actual_angle = 0
+        self.odom.reset_odometry()
+
     def differential_update(self):
-        self.differential.update()
+        self.differential.update(self.actual_distance, self.actual_angle)
         self.set_left_side(self.differential.left_chain_speed)
         self.set_right_side(self.differential.right_chain_speed)
 
@@ -175,12 +193,14 @@ class Controller():
     # Right side control
     def set_right_side(self, speed):
         self.left_speed = self.speed_normalize_function(speed)
-        self.right_speed_odom = speed
+        if self.internal_odom:
+            self.right_speed_odom = speed
 
     # Left side control
     def set_left_side(self, speed):
         self.right_speed = self.speed_normalize_function(speed)
-        self.left_speed_odom = speed
+        if self.internal_odom:
+            self.left_speed_odom = speed
 
     def speed_normalize_function(self, speed):
         in_min = -100
@@ -193,27 +213,29 @@ class Controller():
     def controller_data_sender(self):
         while self.running:
             if not debug:
+                if self.mode == 6:
+                    self.differential_update()
                 self.serial.send_data(f":ML={self.left_speed}!")
                 self.serial.send_data(f":MR={self.right_speed}!")
-                self.odom.update(self.left_speed_odom, self.right_speed_odom)
-
+                self.actual_distance, self.actual_angle = self.odom.update(self.left_speed_odom, self.right_speed_odom)
             #print(f":ML={self.left_speed}!")
             #print(f":MR={self.right_speed}!")
-            time.sleep(0.02)  # Send data every 20ms
+            time.sleep(0.01)  # Send data every 20ms
 
     def velocity_data_reader(self):
         while self.running:
             if not debug:
-                velocity_right, velocity_left = self.serial.read_velocity
-                if velocity_left != None and velocity_right != None:
-                    self.left_speed_odom = velocity_left
-                    self.right_speed_odom = velocity_right
-                    print('Velocity left: ', velocity_left)
-                    print('Velocity right: ', velocity_right)
+                velocity_right, velocity_left = self.serial.read_velocity()
+                # if velocity_left is not None and velocity_right is not None:
+                #     self.left_speed_odom = velocity_left
+                #     self.right_speed_odom = velocity_right
+                #     print('Velocity left: ', velocity_left)
+                #     print('Velocity right: ', velocity_right)
+                time.sleep(0.01)
 
 
 class SerialCommunication():
-    def __init__(self, port, debug=False):
+    def __init__(self, port):
 
         if not debug:
             self.serial0 = serial.Serial(port)
@@ -230,29 +252,35 @@ class SerialCommunication():
         Reads velocity data from the serial port.
         :return: Tuple (velocity_right, velocity_left) or None if invalid data.
         """
-        if self.debug:
-            return (0.0, 0.0)  # Dummy data in debug mode
+        if debug:
+            return 0.0, 0.0  # Dummy data in debug mode
 
-        try:
-            line = self.serial0.readline().decode().strip()  # Read a line and clean it
-            if not line:
-                return None, None  # No data received
+        # try:
+        if self.serial0.in_waiting > 0:  # Check if data is available
+            print("Reading velocity")
+            line = self.serial0.readline().decode().strip()
+            values = line.split(",")
+            print("line: ", line)
 
-            values = line.split(",")  # Split data by comma
-            if len(values) != 2:
-                print(f"Invalid data: {line}")
-                return None, None
+        return 0.0, 0.0
+        # if not line:
+        #     return None, None  # No data received
+        # print("line: ", line)
+        # values = line.split(",")  # Split data by comma
+        # if len(values) != 2:
+        #     print(f"Invalid data: {line}")
+        #     return None, None
+        #
+        # velocity_right = float(values[0])
+        # velocity_left = float(values[1])
+        #
+        # return velocity_right, velocity_left
+        # except Exception as e:
+        #     print(f"Error reading velocity: {e}")
+        #     return None, None
 
-            velocity_right = float(values[0])
-            velocity_left = float(values[1])
 
-            return velocity_right, velocity_left
-        except Exception as e:
-            print(f"Error reading velocity: {e}")
-            return None, None
-
-
-serial = SerialCommunication(socket_source.serial_port, debug)
+serial = SerialCommunication(socket_source.serial_port)
 controller = Controller(serial)
 
 # Create Communication instance
@@ -264,10 +292,10 @@ listener_thread = threading.Thread(target=communication.listen, daemon=True)
 listener_thread.start()
 
 # Start sending controller data independently in a separate thread
-sender_thread = threading.Thread(target=controller.controller_data_sender)
-sender_thread.start()
+# sender_thread = threading.Thread(target=controller.controller_data_sender, daemon=True)
+# sender_thread.start()
 
-reader_thread = threading.Thread(target=controller.velocity_data_reader)
+reader_thread = threading.Thread(target=controller.velocity_data_reader, daemon=True)
 reader_thread.start()
 
 
