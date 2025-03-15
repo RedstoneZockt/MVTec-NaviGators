@@ -51,17 +51,19 @@ class DifferentialController():
 
     def update(self, distance, angle):
         self.error_calculation(distance, angle)
-        linear_velocity = self.gain_linear * self.distance_error
+        linear_velocity = 0
+        if abs(self.distance_error) > 0.1:
+            linear_velocity = self.gain_linear * self.distance_error
         if linear_velocity > self.max_speed:
             linear_velocity = self.max_speed
         elif linear_velocity < - self.max_speed:
             linear_velocity = -self.max_speed
 
-        if self.angle > 0.0:
+        if self.angle_error > 0.1:
             self.right_chain_speed = linear_velocity - self.gain_angular * self.angle_error
             self.left_chain_speed = linear_velocity
 
-        elif self.angle < 0.0:
+        elif self.angle_error < -0.1:
             self.right_chain_speed = linear_velocity
             self.left_chain_speed = linear_velocity - self.gain_angular * self.angle_error
 
@@ -71,9 +73,10 @@ class DifferentialController():
 
         print("Distance: " + str(self.distance))
         print("Angle: " + str(self.angle))
+        print("Distamce error: " + str(self.distance_error))
+        print("Angle error: " + str(self.angle_error))
         print("Right chain: " + str(self.right_chain_speed))
         print("Light chain: " + str(self.left_chain_speed))
-        print("Max speed: " + str(self.max_speed))
 
 
 
@@ -254,7 +257,6 @@ class SerialCommunication():
         """
         if debug:
             return 0.0, 0.0  # Dummy data in debug mode
-
         # try:
         if self.serial0.in_waiting > 0:  # Check if data is available
             print("Reading velocity")
@@ -291,12 +293,12 @@ communication = comunication.ReceiverController(socket_source.local_host_address
 listener_thread = threading.Thread(target=communication.listen, daemon=True)
 listener_thread.start()
 
-# Start sending controller data independently in a separate thread
-# sender_thread = threading.Thread(target=controller.controller_data_sender, daemon=True)
-# sender_thread.start()
+#Start sending controller data independently in a separate thread
+sender_thread = threading.Thread(target=controller.controller_data_sender, daemon=True)
+sender_thread.start()
 
-reader_thread = threading.Thread(target=controller.velocity_data_reader, daemon=True)
-reader_thread.start()
+# reader_thread = threading.Thread(target=controller.velocity_data_reader, daemon=True)
+# reader_thread.start()
 
 
 

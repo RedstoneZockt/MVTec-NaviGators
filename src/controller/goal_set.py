@@ -10,7 +10,7 @@ import socket_source
 # L - turn left in mode 1
 # S - stop in mode 1
 adress = socket_source.local_host_address
-port = socket_source.state_port
+port = socket_source.controller_port
 
 while True:
     user_input = input("Enter something: ")
