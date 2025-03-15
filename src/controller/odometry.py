@@ -9,12 +9,22 @@ class ChainDriveOdometry:
         :param wheelbase: Distance between the left and right chain (meters).
         :param dt: Time step for updates (seconds).
         """
-        self.x = 0.0  # X position (meters)
-        self.y = 0.0  # Y position (meters)
+
+        self.distance = 0.0
         self.theta = 0.0  # Orientation (radians)
+        self.dt = 0.0
+        self.actual_time = 0.0
+        self.factor = 0.8
 
         self.wheelbase = 0.19  # Distance between chains
         self.current_time = time.time()
+
+    def reset_odometry(self):
+        self.current_time = time.time()
+        self.x = 0.0  # X position (meters)
+        self.y = 0.0  # Y position (meters)
+        self.distance = 0.0
+        self.theta = 0.0  # Orientation (radians)
 
     def update(self, v_left, v_right):
         """
@@ -30,12 +40,10 @@ class ChainDriveOdometry:
         omega = (v_right - v_left) / self.wheelbase  # Angular velocity
 
         # Update position using simple kinematics
-        delta_x = v * math.cos(self.theta) * self.dt
-        delta_y = v * math.sin(self.theta) * self.dt
+        delta = v * self.dt
         delta_theta = omega * self.dt
 
-        self.x += delta_x
-        self.y += delta_y
+        self.distance += delta
         self.theta += delta_theta
 
         # Keep theta within -π to π
@@ -44,12 +52,14 @@ class ChainDriveOdometry:
         while self.theta < -math.pi:
             self.theta += 2 * math.pi
 
+        return self.distance, self.theta
+
     def get_position(self):
         """
         Get the current estimated position and orientation.
         :return: (x, y, theta) tuple.
         """
-        return self.x, self.y, self.theta
+        return self.distance, self.theta
 
 # Example Usage
 # if __name__ == "__main__":
