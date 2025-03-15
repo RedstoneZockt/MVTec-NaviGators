@@ -1,14 +1,14 @@
 import keyboard
 import comunication
 import time
-
+import socket_source
 
 speed = 80
 
 print("Press W/A/S/D to move, R to increase speed, F to decrease speed,  Q to quit.")
 
 
-communication = comunication.Transceiver('127.0.0.1', 6000)
+communication = comunication.Transceiver(socket_source.remote_host_address, socket_source.remote_port)
 communication.send_data('S' + str(speed))
 
 while True:

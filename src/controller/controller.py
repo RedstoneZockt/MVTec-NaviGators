@@ -4,11 +4,8 @@ import time
 import threading
 import comunication
 import odometry
-import sys
+import socket_source
 
-serial_port = "/dev/ttyUSB0"
-server_address = "127.0.0.1"
-server_port = 3000
 debug = False
 # MODE:
 # 1 - Forward, Backward, Turn left, Turn right control
@@ -217,11 +214,11 @@ class SerialCommunication():
         self.heart_beat = not self.heart_beat
 
 
-serial = SerialCommunication(serial_port, debug)
+serial = SerialCommunication(socket_source.serial_port, debug)
 controller = Controller(serial)
 
 # Create Communication instance
-communication = comunication.ReceiverController(server_address, server_port, controller)
+communication = comunication.ReceiverController(socket_source.local_host_address, socket_source.controller_port, controller)
 
 
 # Start listening for incoming commands in a separate thread

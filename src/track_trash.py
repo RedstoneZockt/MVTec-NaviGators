@@ -5,6 +5,11 @@ import ast
 from dotenv import load_dotenv
 import serial
 import math
+import controller.comunication as communication
+
+ip_address = '127.0.0.1'
+port_controller = 3000
+port_status = 5001
 
 load_dotenv()
 
@@ -82,8 +87,11 @@ def get_trash_positions():
     else
         return None
 
-    print(target_x_value)
-    print(target_y_value)
+    else:
+        return None, None
+
+    # print(target_x_value)
+    # print(target_y_value)
 
     # Add another 0.25m to the y distance
     # The camera detects all objects in a coordinate system in front of the robot
@@ -92,35 +100,26 @@ def get_trash_positions():
     
     angle_diff = math.atan2(target_x_value, target_y_value)
     angle_degree = math.degrees(angle_diff)
-    print(angle_degree)
+    distance = pow(pow(target_x_value, 2) + pow(target_y_value, 2), 0.5)
+
+    return angle_diff, distance
 
     return angle_diff
 
 
 if __name__ == '__main__':
-    ser = serial.Serial("/dev/ttyUSB0")  # open serial port
-    print(ser.name)
-    heart_beat: bool = True
-    
-    while(True):
-        command_heart_beat: str = ":WD=" + str(int(heart_beat)) + "!"
-        ser.write(command_heart_beat.encode())
-        
-        angle_diff = get_trash_positions()
+    communication_controller = communication.Transceiver(ip_address, port_controller)
+    communication_status = communication.Transceiver(ip_address, port_status)
+    detect = False
+    while True:
+        angle, distance = get_trash_positions()
 
-        if angle_diff is not None:
-            if column[0] < 780:
-                command_left: str = ":ML=" + str(130) + "!"
-                command_right: str = ":MR=" + str(180) + "!"
-            elif column[0] > 820:
-                command_left: str = ":ML=" + str(180) + "!"
-                command_right: str = ":MR=" + str(130) + "!"
-            else:
-                command_left: str = ":ML=" + str(180) + "!"
-                command_right: str = ":MR=" + str(180) + "!"
-        else:
-            command_left: str = ":ML=" + str(155) + "!"
-            command_right: str = ":MR=" + str(155) + "!"
+        if angle is not None and distance is not None:
+            if not detect:
+                communication_status.send_data("f")
+                communication_controller.send_data("M6")
+            communication_controller.send_data("A" + str(angle*100))
+            communication_controller.send_data("D" + str(distance*100))
 
         # sorted_data_by_nearest = sorted(result, key=lambda item: item[2], reverse=True)
         
