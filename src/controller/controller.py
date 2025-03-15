@@ -189,6 +189,7 @@ class Controller():
         out_max = 310
         return (speed - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 
+
     def controller_data_sender(self):
         while self.running:
             if not debug:
@@ -200,9 +201,20 @@ class Controller():
             #print(f":MR={self.right_speed}!")
             time.sleep(0.02)  # Send data every 20ms
 
+    def velocity_data_reader(self):
+        while self.running:
+            if not debug:
+                velocity_right, velocity_left = self.serial.read_velocity
+                if velocity_left != None and velocity_right != None:
+                    self.left_speed_odom = velocity_left
+                    self.right_speed_odom = velocity_right
+                    print('Velocity left: ', velocity_left)
+                    print('Velocity right: ', velocity_right)
+
 
 class SerialCommunication():
     def __init__(self, port, debug=False):
+
         if not debug:
             self.serial0 = serial.Serial(port)
             self.heart_beat = True
@@ -212,6 +224,32 @@ class SerialCommunication():
         self.serial0.write(command_heart_beat.encode())
         self.serial0.write(data.encode())
         self.heart_beat = not self.heart_beat
+
+    def read_velocity(self):
+        """
+        Reads velocity data from the serial port.
+        :return: Tuple (velocity_right, velocity_left) or None if invalid data.
+        """
+        if self.debug:
+            return (0.0, 0.0)  # Dummy data in debug mode
+
+        try:
+            line = self.serial0.readline().decode().strip()  # Read a line and clean it
+            if not line:
+                return None, None  # No data received
+
+            values = line.split(",")  # Split data by comma
+            if len(values) != 2:
+                print(f"Invalid data: {line}")
+                return None, None
+
+            velocity_right = float(values[0])
+            velocity_left = float(values[1])
+
+            return velocity_right, velocity_left
+        except Exception as e:
+            print(f"Error reading velocity: {e}")
+            return None, None
 
 
 serial = SerialCommunication(socket_source.serial_port, debug)
@@ -228,6 +266,10 @@ listener_thread.start()
 # Start sending controller data independently in a separate thread
 sender_thread = threading.Thread(target=controller.controller_data_sender)
 sender_thread.start()
+
+reader_thread = threading.Thread(target=controller.velocity_data_reader)
+reader_thread.start()
+
 
 
 # Handle Ctrl+C gracefully
