@@ -79,6 +79,8 @@ def get_trash_positions():
     elif 'world_y' in json_dict and 'world_x' in json_dict and type(json_dict['world_x']) == float:
         target_y_value = json_dict['world_x']
         target_x_value = json_dict['world_y']
+    else
+        return None
 
     print(target_x_value)
     print(target_y_value)
@@ -92,6 +94,8 @@ def get_trash_positions():
     angle_degree = math.degrees(angle_diff)
     print(angle_degree)
 
+    return angle_diff
+
 
 if __name__ == '__main__':
     ser = serial.Serial("/dev/ttyUSB0")  # open serial port
@@ -102,7 +106,22 @@ if __name__ == '__main__':
         command_heart_beat: str = ":WD=" + str(int(heart_beat)) + "!"
         ser.write(command_heart_beat.encode())
         
-        get_trash_positions()
+        angle_diff = get_trash_positions()
+
+        if angle_diff is not None:
+            if column[0] < 780:
+                command_left: str = ":ML=" + str(130) + "!"
+                command_right: str = ":MR=" + str(180) + "!"
+            elif column[0] > 820:
+                command_left: str = ":ML=" + str(180) + "!"
+                command_right: str = ":MR=" + str(130) + "!"
+            else:
+                command_left: str = ":ML=" + str(180) + "!"
+                command_right: str = ":MR=" + str(180) + "!"
+        else:
+            command_left: str = ":ML=" + str(155) + "!"
+            command_right: str = ":MR=" + str(155) + "!"
+
         # sorted_data_by_nearest = sorted(result, key=lambda item: item[2], reverse=True)
         
         # target = sorted_data_by_nearest[0]
